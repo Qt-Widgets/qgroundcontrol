@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -26,7 +26,7 @@ QString APMFlightModesComponent::name(void) const
 
 QString APMFlightModesComponent::description(void) const
 {
-    return QStringLiteral("The Flight Modes Component is used to assign FLight Modes to Channel 5.");
+    return tr("Flight Modes Setup is used to configure the transmitter switches associated with Flight Modes.");
 }
 
 QString APMFlightModesComponent::iconResource(void) const
@@ -57,20 +57,4 @@ QUrl APMFlightModesComponent::setupSource(void) const
 QUrl APMFlightModesComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMFlightModesComponentSummary.qml"));
-}
-
-QString APMFlightModesComponent::prerequisiteSetup(void) const
-{
-    APMAutoPilotPlugin* plugin = dynamic_cast<APMAutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
-
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    } else if (plugin->radioComponent() != NULL) {
-        if (!plugin->radioComponent()->setupComplete()) {
-            return plugin->radioComponent()->name();
-        }
-    }
-    
-    return QString();
 }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,7 +11,7 @@
 /**
  * @file
  *   @brief QGC Video Streaming Initialization
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 #include <QtQml>
@@ -22,16 +22,17 @@
 #ifdef __android__
 //#define ANDDROID_GST_DEBUG
 #endif
+#if defined(__ios__)
+#include "gst_ios_init.h"
+#endif
+#else
+#include "GLVideoItemStub.h"
 #endif
 
 #include "VideoStreaming.h"
-#include "VideoItem.h"
-#include "VideoSurface.h"
 
 #if defined(QGC_GST_STREAMING)
     G_BEGIN_DECLS
-    // Our own plugin
-    GST_PLUGIN_STATIC_DECLARE(QGC_VIDEOSINK_PLUGIN);
     // The static plugins we use
 #if defined(__mobile__)
     GST_PLUGIN_STATIC_DECLARE(coreelements);
@@ -42,12 +43,19 @@
     GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
     GST_PLUGIN_STATIC_DECLARE(x264);
     GST_PLUGIN_STATIC_DECLARE(rtpmanager);
+    GST_PLUGIN_STATIC_DECLARE(isomp4);
+    GST_PLUGIN_STATIC_DECLARE(matroska);
+    GST_PLUGIN_STATIC_DECLARE(opengl);
 #endif
+#if defined(__android__)
+    GST_PLUGIN_STATIC_DECLARE(androidmedia);
+#endif
+    GST_PLUGIN_STATIC_DECLARE(qmlgl);
     G_END_DECLS
 #endif
 
 #if defined(QGC_GST_STREAMING)
-#if (defined(__macos__) && defined(QGC_INSTALL_RELEASE)) || defined(Q_OS_WIN)
+#if (defined(Q_OS_MAC) && defined(QGC_INSTALL_RELEASE)) || defined(Q_OS_WIN)
 static void qgcputenv(const QString& key, const QString& root, const QString& path)
 {
     QString value = root + path;
@@ -99,10 +107,10 @@ int start_logger(const char *app_name)
 }
 #endif
 
-void initializeVideoStreaming(int &argc, char* argv[])
+void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debuglevel)
 {
 #if defined(QGC_GST_STREAMING)
-    #ifdef __macos__
+    #ifdef Q_OS_MAC
         #ifdef QGC_INSTALL_RELEASE
             QString currentDir = QCoreApplication::applicationDirPath();
             qgcputenv("GST_PLUGIN_SCANNER",           currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner");
@@ -117,21 +125,31 @@ void initializeVideoStreaming(int &argc, char* argv[])
         QString currentDir = QCoreApplication::applicationDirPath();
         qgcputenv("GST_PLUGIN_PATH", currentDir, "/gstreamer-plugins");
     #endif
-        // Initialize GStreamer
-        #ifdef ANDDROID_GST_DEBUG
-        start_logger("gst_log");
-        qputenv("GST_DEBUG", "*:4");
-        qputenv("GST_DEBUG_NO_COLOR", "1");
-        #endif
-        GError* error = NULL;
+
+    // Initialize GStreamer
+    #if defined(__ios__)
+        //-- iOS specific initialization
+        gst_ios_init();
+    #else
+        //-- Generic initialization
+        if (qgetenv("GST_DEBUG").isEmpty() && logpath) {
+            QString gstDebugFile = QString("%1/%2").arg(logpath).arg("gstreamer-log.txt");
+            qDebug() << "GStreamer debug output:" << gstDebugFile;
+            if (debuglevel) {
+                qputenv("GST_DEBUG", debuglevel);
+            }
+            qputenv("GST_DEBUG_NO_COLOR", "1");
+            qputenv("GST_DEBUG_FILE", gstDebugFile.toUtf8());
+            qputenv("GST_DEBUG_DUMP_DOT_DIR", logpath);
+        }
+        GError* error = nullptr;
         if (!gst_init_check(&argc, &argv, &error)) {
             qCritical() << "gst_init_check() failed: " << error->message;
             g_error_free(error);
         }
-        // Our own plugin
-        GST_PLUGIN_STATIC_REGISTER(QGC_VIDEOSINK_PLUGIN);
+    #endif
         // The static plugins we use
-    #if defined(__mobile__)
+    #if defined(__android__)
         GST_PLUGIN_STATIC_REGISTER(coreelements);
         GST_PLUGIN_STATIC_REGISTER(libav);
         GST_PLUGIN_STATIC_REGISTER(rtp);
@@ -140,27 +158,37 @@ void initializeVideoStreaming(int &argc, char* argv[])
         GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
         GST_PLUGIN_STATIC_REGISTER(x264);
         GST_PLUGIN_STATIC_REGISTER(rtpmanager);
+        GST_PLUGIN_STATIC_REGISTER(isomp4);
+        GST_PLUGIN_STATIC_REGISTER(matroska);
+        GST_PLUGIN_STATIC_REGISTER(androidmedia);
     #endif
-#else
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
-#endif
-    qmlRegisterType<VideoItem>              ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoItem");
-    qmlRegisterUncreatableType<VideoSurface>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface", QLatin1String("VideoSurface from QML is not supported"));
-}
 
-void shutdownVideoStreaming()
-{
-    /* From: http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-Gst.html#gst-deinit
-     *
-     * "It is normally not needed to call this function in a normal application as the resources will automatically
-     * be freed when the program terminates. This function is therefore mostly used by testsuites and other memory
-     * profiling tools."
-     *
-     * It's causing a hang on exit. It hangs while deleting some thread.
-     *
-#if defined(QGC_GST_STREAMING)
-     gst_deinit();
+#if defined(__mobile__)
+        GST_PLUGIN_STATIC_REGISTER(opengl);
 #endif
-    */
+
+    /* the plugin must be loaded before loading the qml file to register the
+     * GstGLVideoItem qml item
+     * FIXME Add a QQmlExtensionPlugin into qmlglsink to register GstGLVideoItem
+     * with the QML engine, then remove this */
+    GstElement *sink = gst_element_factory_make("qmlglsink", nullptr);
+
+    if (sink == nullptr) {
+        GST_PLUGIN_STATIC_REGISTER(qmlgl);
+        sink = gst_element_factory_make("qmlglsink", nullptr);
+    }
+
+    if (sink != nullptr) {
+        gst_object_unref(sink);
+        sink = nullptr;
+    } else {
+        qCritical() << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
+    }
+#else
+    qmlRegisterType<GLVideoItemStub> ("org.freedesktop.gstreamer.GLVideoItem", 1, 0, "GstGLVideoItem");
+    Q_UNUSED(argc)
+    Q_UNUSED(argv)
+    Q_UNUSED(logpath)
+    Q_UNUSED(debuglevel)
+#endif
 }

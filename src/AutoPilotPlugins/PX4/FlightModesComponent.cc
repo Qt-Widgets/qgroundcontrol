@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -13,7 +13,6 @@
 
 #include "FlightModesComponent.h"
 #include "PX4AutoPilotPlugin.h"
-#include "QGCQmlWidgetHolder.h"
 
 struct SwitchListItem {
     const char* param;
@@ -77,25 +76,4 @@ QUrl FlightModesComponent::setupSource(void) const
 QUrl FlightModesComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/FlightModesComponentSummary.qml");
-}
-
-QString FlightModesComponent::prerequisiteSetup(void) const
-{
-    if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
-        // No RC input
-        return QString();
-    } else {
-        PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
-        Q_ASSERT(plugin);
-
-        if (!plugin->airframeComponent()->setupComplete()) {
-            return plugin->airframeComponent()->name();
-        } else if (!plugin->radioComponent()->setupComplete()) {
-            return plugin->radioComponent()->name();
-        } else if (!_vehicle->hilMode() && !plugin->sensorsComponent()->setupComplete()) {
-            return plugin->sensorsComponent()->name();
-        }
-    }
-
-    return QString();
 }

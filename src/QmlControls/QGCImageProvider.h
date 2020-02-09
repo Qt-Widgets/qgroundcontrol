@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,7 +12,7 @@
  * @file
  *   @brief Image Provider
  *
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 
@@ -29,7 +29,7 @@
 class QGCImageProvider : public QGCTool, public QQuickImageProvider
 {
 public:
-    QGCImageProvider        (QGCApplication* app);
+    QGCImageProvider        (QGCApplication* app, QGCToolbox* toolbox);
     ~QGCImageProvider       ();
     QImage  requestImage    (const QString & id, QSize * size, const QSize & requestedSize);
     void    setImage        (QImage* pImage, int id = 0);

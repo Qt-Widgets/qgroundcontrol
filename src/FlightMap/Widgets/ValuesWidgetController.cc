@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,6 +9,8 @@
 
 
 #include "ValuesWidgetController.h"
+#include "QGCApplication.h"
+#include "QGCCorePlugin.h"
 
 #include <QSettings>
 
@@ -19,13 +21,14 @@ const char* ValuesWidgetController::_smallValuesKey =   "small";
 ValuesWidgetController::ValuesWidgetController(void)
 {
     QSettings settings;
-    QStringList largeDefaults;
 
     settings.beginGroup(_groupKey);
 
-    largeDefaults << "Vehicle.altitudeRelative" << "Vehicle.groundSpeed";
+    QStringList largeDefaults, smallDefaults;
+    qgcApp()->toolbox()->corePlugin()->valuesWidgetDefaultSettings(largeDefaults, smallDefaults);
+
     _largeValues = settings.value(_largeValuesKey, largeDefaults).toStringList();
-    _smallValues = settings.value(_smallValuesKey, QStringList()).toStringList();
+    _smallValues = settings.value(_smallValuesKey, smallDefaults).toStringList();
 
     _altitudeProperties << "altitudeRelative" << "altitudeAMSL";
 

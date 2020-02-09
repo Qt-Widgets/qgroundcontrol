@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,7 +11,7 @@
 
 /// @file
 ///     @brief  ESP8266 WiFi Config Qml Controller
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 #ifndef ESP8266ComponentController_H
 #define ESP8266ComponentController_H
@@ -82,8 +82,7 @@ signals:
     void        busyChanged             ();
 
 private slots:
-    void        _processTimeout     ();
-    void        _commandAck         (uint8_t compID, uint16_t command, uint8_t result);
+    void        _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     void        _ssidChanged        (QVariant value);
     void        _passwordChanged    (QVariant value);
     void        _baudChanged        (QVariant value);
@@ -94,7 +93,6 @@ private:
     void        _restoreDefaults    ();
 
 private:
-    QTimer      _timer;
     QStringList _channels;
     QStringList _baudRates;
     QString     _ipAddress;

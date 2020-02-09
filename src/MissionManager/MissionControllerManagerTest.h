@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -55,6 +55,7 @@ protected:
 
     typedef enum {
         newMissionItemsAvailableSignalIndex = 0,
+        sendCompleteSignalIndex,
         inProgressChangedSignalIndex,
         errorSignalIndex,
         maxSignalIndex
@@ -62,6 +63,7 @@ protected:
 
     typedef enum {
         newMissionItemsAvailableSignalMask =    1 << newMissionItemsAvailableSignalIndex,
+        sendCompleteSignalMask =                1 << sendCompleteSignalIndex,
         inProgressChangedSignalMask =           1 << inProgressChangedSignalIndex,
         errorSignalMask =                       1 << errorSignalIndex,
     } MissionManagerSignalMask_t;

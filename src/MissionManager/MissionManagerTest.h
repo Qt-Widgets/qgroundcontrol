@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -33,13 +33,13 @@ private slots:
     void _testReadFailureHandlingAPM(void);
 
 private:
-    void _roundTripItems(MockLinkMissionItemHandler::FailureMode_t failureMode);
-    void _writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode);
+    void _roundTripItems(MockLinkMissionItemHandler::FailureMode_t failureMode, bool shouldFail);
+    void _writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode, bool shouldFail);
     void _testWriteFailureHandlingWorker(void);
     void _testReadFailureHandlingWorker(void);
     
-    static const MissionControllerManagerTest::TestCase_t   _rgTestCases[];
-    static const size_t                                     _cTestCases;
+    static const TestCase_t _rgTestCases[];
+    static const size_t     _cTestCases;
 };
 
 #endif
